@@ -1,85 +1,154 @@
 import io
+from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Comparador de Archivos",
-    page_icon="🔗",
+    page_title="Sistema de Cruce y Consolidación de Bases de Datos",
+    page_icon="🗂️",
     layout="wide",
 )
 
 # ---------------------------------------------------------------------------
-# Estilos
+# Estilos — paleta institucional (azul marino / gris)
 # ---------------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    .stApp { background-color: #f7f9fc; }
+    .stApp { background-color: #f4f5f7; }
 
     .hero {
-        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-        padding: 2.2rem 2rem;
-        border-radius: 16px;
-        color: white;
-        margin-bottom: 1.8rem;
+        background: #1f4d3a;
+        padding: 2rem 2.2rem;
+        border-radius: 10px;
+        color: #faf6ec;
+        margin-bottom: 1rem;
+        border-left: 6px solid #d9c69c;
+    }
+    .hero .institucion {
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #d9c69c;
+        margin-bottom: 0.1rem;
+    }
+    .hero .institucion-nombre {
+        font-size: 0.85rem;
+        color: #e4ddc8;
+        margin-bottom: 0.9rem;
     }
     .hero h1 {
-        font-size: 2rem;
-        margin-bottom: 0.4rem;
-        color: white;
+        font-size: 1.7rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        color: #ffffff;
+        letter-spacing: 0.2px;
+    }
+    .hero .subtitulo {
+        font-size: 0.95rem;
+        color: #d9c69c;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.6rem;
     }
     .hero p {
-        font-size: 1rem;
-        opacity: 0.92;
+        font-size: 0.95rem;
+        color: #e4ddc8;
         margin-bottom: 0;
+        line-height: 1.5;
     }
     .hero code {
-        background: rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.14);
         padding: 2px 8px;
-        border-radius: 6px;
-        color: white;
+        border-radius: 4px;
+        color: #faf6ec;
     }
 
+    .meta-bar {
+        background: #faf6ec;
+        border: 1px solid #e0d6bd;
+        border-radius: 8px;
+        padding: 0.7rem 1.2rem;
+        margin-bottom: 1.6rem;
+        font-size: 0.85rem;
+        color: #4a4030;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.5rem;
+    }
+    .meta-bar b { color: #1f4d3a; }
+
     section[data-testid="stFileUploaderDropzone"] {
-        border-radius: 12px;
-        border: 1.5px dashed #93c5fd;
-        background-color: #eff6ff;
+        border-radius: 8px;
+        border: 1.5px dashed #6b9080;
+        background-color: #f2efe4;
     }
 
     div[data-testid="stMetric"] {
-        background-color: white;
-        border-radius: 12px;
+        background-color: #faf6ec;
+        border-radius: 8px;
         padding: 1rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 2px rgba(31,77,58,0.08);
+        border: 1px solid #e0d6bd;
+        border-top: 3px solid #1f4d3a;
     }
 
     .stTabs [data-baseweb="tab"] {
         font-weight: 600;
+        color: #1f4d3a;
     }
 
     .seccion-final {
-        background: white;
-        border-radius: 16px;
+        background: #faf6ec;
+        border-radius: 10px;
         padding: 1.8rem;
         margin-top: 1.5rem;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #e0d6bd;
+        border-left: 6px solid #d9c69c;
+    }
+
+    .pie-pagina {
+        margin-top: 2.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e0d6bd;
+        font-size: 0.78rem;
+        color: #8b8168;
+        text-align: center;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+ahora = datetime.now()
+
 st.markdown(
-    """
+    f"""
     <div class="hero">
-        <h1>🔗 Comparador y Cruce de Archivos</h1>
-        <p>Sube dos archivos (CSV o Excel) que compartan una columna en común
-        (por ejemplo <code>matricula</code> o <code>cardex</code>) y esta
-        herramienta te mostrará automáticamente los cruces (INNER, LEFT, RIGHT),
-        las filas que no coincidieron, y te dejará descargar una base de datos
-        consolidada en Excel.</p>
+        <div class="institucion">CIEFD</div>
+        <div class="institucion-nombre">Centro de Investigación Educativa y Formación Docente</div>
+        <div class="subtitulo">Herramienta de análisis de datos</div>
+        <h1>🗂️ Sistema de Cruce y Consolidación de Bases de Datos</h1>
+        <p>Compara dos archivos (CSV o Excel) a partir de una columna clave en
+        común (por ejemplo <code>matricula</code> o <code>cardex</code>).
+        El sistema genera automáticamente los cruces INNER, LEFT y RIGHT,
+        identifica las discrepancias entre ambas fuentes, y produce una base
+        de datos consolidada descargable en formato Excel.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    f"""
+    <div class="meta-bar">
+        <span>🏛️ Institución: <b>CIEFD</b></span>
+        <span>📅 Fecha del reporte: <b>{ahora.strftime('%d/%m/%Y')}</b></span>
+        <span>🕒 Hora de generación: <b>{ahora.strftime('%H:%M:%S')}</b></span>
+        <span>⚙️ Versión del sistema: <b>1.1</b></span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -258,3 +327,19 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 )
 st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# Pie de página
+# ---------------------------------------------------------------------------
+st.markdown(
+    f"""
+    <div class="pie-pagina">
+        CIEFD · Centro de Investigación Educativa y Formación Docente<br>
+        Reporte generado automáticamente el {ahora.strftime('%d/%m/%Y a las %H:%M:%S')}
+        · Sistema de Cruce y Consolidación de Bases de Datos v1.1
+        · Los datos procesados no se almacenan; el análisis ocurre únicamente
+        durante esta sesión.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
