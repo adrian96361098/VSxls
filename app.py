@@ -1,3 +1,4 @@
+import io
 import pandas as pd
 import streamlit as st
 
@@ -7,17 +8,86 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("🔗 Comparador y Cruce de Archivos")
+# ---------------------------------------------------------------------------
+# Estilos
+# ---------------------------------------------------------------------------
 st.markdown(
-    "Sube dos archivos (CSV o Excel) que compartan una columna en común "
-    "(por ejemplo **`matricula`** o **`cardex`**) y esta herramienta te "
-    "mostrará automáticamente los cruces (INNER, LEFT, RIGHT) y las filas "
-    "que no coincidieron entre ambos."
+    """
+    <style>
+    .stApp { background-color: #f7f9fc; }
+
+    .hero {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        padding: 2.2rem 2rem;
+        border-radius: 16px;
+        color: white;
+        margin-bottom: 1.8rem;
+    }
+    .hero h1 {
+        font-size: 2rem;
+        margin-bottom: 0.4rem;
+        color: white;
+    }
+    .hero p {
+        font-size: 1rem;
+        opacity: 0.92;
+        margin-bottom: 0;
+    }
+    .hero code {
+        background: rgba(255,255,255,0.18);
+        padding: 2px 8px;
+        border-radius: 6px;
+        color: white;
+    }
+
+    section[data-testid="stFileUploaderDropzone"] {
+        border-radius: 12px;
+        border: 1.5px dashed #93c5fd;
+        background-color: #eff6ff;
+    }
+
+    div[data-testid="stMetric"] {
+        background-color: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 600;
+    }
+
+    .seccion-final {
+        background: white;
+        border-radius: 16px;
+        padding: 1.8rem;
+        margin-top: 1.5rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-st.divider()
+st.markdown(
+    """
+    <div class="hero">
+        <h1>🔗 Comparador y Cruce de Archivos</h1>
+        <p>Sube dos archivos (CSV o Excel) que compartan una columna en común
+        (por ejemplo <code>matricula</code> o <code>cardex</code>) y esta
+        herramienta te mostrará automáticamente los cruces (INNER, LEFT, RIGHT),
+        las filas que no coincidieron, y te dejará descargar una base de datos
+        consolidada en Excel.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-# --- Carga de archivos ---
+# ---------------------------------------------------------------------------
+# Carga de archivos
+# ---------------------------------------------------------------------------
 col1, col2 = st.columns(2)
 with col1:
     archivo1 = st.file_uploader("📄 Archivo 1", type=["csv", "xlsx", "xls"])
@@ -37,7 +107,6 @@ def leer_archivo(archivo):
     return pd.read_csv(archivo)
 
 
-# --- Lectura con manejo de errores ---
 try:
     datos1 = leer_archivo(archivo1)
     datos2 = leer_archivo(archivo2)
@@ -45,7 +114,9 @@ except Exception as e:
     st.error(f"❌ Ocurrió un error al leer los archivos: {e}")
     st.stop()
 
-# --- Selección de la columna de cruce ---
+# ---------------------------------------------------------------------------
+# Selección de la columna de cruce
+# ---------------------------------------------------------------------------
 columnas_comunes = sorted(set(datos1.columns) & set(datos2.columns))
 
 if not columnas_comunes:
@@ -55,8 +126,7 @@ if not columnas_comunes:
     )
     st.stop()
 
-# Sugerir "matricula" o "cardex" como opción por defecto si existen
-preferidas = [c for c in ["matricula", "cardex"] if c in columnas_comunes]
+preferidas = [c for c in ["matricula", "Matrícula", "cardex"] if c in columnas_comunes]
 indice_default = columnas_comunes.index(preferidas[0]) if preferidas else 0
 
 columna_cruce = st.selectbox(
@@ -65,7 +135,6 @@ columna_cruce = st.selectbox(
     index=indice_default,
 )
 
-# --- Vista previa rápida ---
 with st.expander("👀 Vista previa de los archivos cargados"):
     prev1, prev2 = st.columns(2)
     with prev1:
@@ -75,14 +144,14 @@ with st.expander("👀 Vista previa de los archivos cargados"):
         st.caption(f"Archivo 2 — {len(datos2)} filas")
         st.dataframe(datos2.head(), use_container_width=True)
 
-# --- Cálculo de los joins ---
+# ---------------------------------------------------------------------------
+# Cálculo de los joins
+# ---------------------------------------------------------------------------
 inner = pd.merge(datos1, datos2, on=columna_cruce, how="inner")
 left = pd.merge(datos1, datos2, on=columna_cruce, how="left", indicator=True)
 right = pd.merge(datos1, datos2, on=columna_cruce, how="right", indicator=True)
 
-# Filas del archivo 1 que no encontraron pareja en el archivo 2
 faltan_en_2 = left[left["_merge"] == "left_only"].drop(columns="_merge")
-# Filas del archivo 2 que no encontraron pareja en el archivo 1
 faltan_en_1 = right[right["_merge"] == "right_only"].drop(columns="_merge")
 
 left = left.drop(columns="_merge")
@@ -90,12 +159,11 @@ right = right.drop(columns="_merge")
 
 st.divider()
 
-# --- Resumen con métricas ---
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Coincidencias (INNER)", len(inner))
-m2.metric("Solo en Archivo 1", len(faltan_en_2))
-m3.metric("Solo en Archivo 2", len(faltan_en_1))
-m4.metric("Total combinado (LEFT)", len(left))
+m1.metric("🤝 Coincidencias (INNER)", len(inner))
+m2.metric("📄 Solo en Archivo 1", len(faltan_en_2))
+m3.metric("📄 Solo en Archivo 2", len(faltan_en_1))
+m4.metric("📊 Total combinado (LEFT)", len(left))
 
 st.divider()
 
@@ -114,7 +182,6 @@ def mostrar_tabla(df, mensaje_vacio="No hay filas que mostrar."):
         )
 
 
-# --- Resultados en pestañas ---
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     [
         "🤝 Inner Join",
@@ -144,3 +211,50 @@ with tab4:
 with tab5:
     st.caption(f"Registros del Archivo 2 cuyo `{columna_cruce}` **no** se encontró en el Archivo 1.")
     mostrar_tabla(faltan_en_1, "🎉 Todos los registros del Archivo 2 tienen coincidencia.")
+
+# ---------------------------------------------------------------------------
+# Base de datos consolidada y actualizada (descarga en .xlsx)
+# ---------------------------------------------------------------------------
+st.markdown('<div class="seccion-final">', unsafe_allow_html=True)
+st.subheader("📦 Base de datos consolidada y actualizada")
+st.markdown(
+    "Genera **una sola tabla** con todos los registros de ambos archivos "
+    f"(sin duplicar por `{columna_cruce}`). Donde un registro exista en los dos "
+    "archivos, se usan los datos del archivo que elijas como más reciente, "
+    "rellenando los espacios vacíos con el otro archivo."
+)
+
+prioridad = st.radio(
+    "¿Cuál archivo es la fuente más reciente / confiable?",
+    ["Archivo 2", "Archivo 1"],
+    horizontal=True,
+)
+
+
+def construir_base_actualizada(d1, d2, col, prioridad):
+    d1 = d1.drop_duplicates(subset=col).set_index(col)
+    d2 = d2.drop_duplicates(subset=col).set_index(col)
+    if prioridad == "Archivo 2":
+        combinado = d2.combine_first(d1)
+    else:
+        combinado = d1.combine_first(d2)
+    return combinado.reset_index()
+
+
+base_actualizada = construir_base_actualizada(datos1, datos2, columna_cruce, prioridad)
+
+st.caption(f"Resultado: **{len(base_actualizada)}** registros únicos por `{columna_cruce}`.")
+st.dataframe(base_actualizada.head(20), use_container_width=True)
+
+buffer = io.BytesIO()
+with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+    base_actualizada.to_excel(writer, index=False, sheet_name="Base actualizada")
+buffer.seek(0)
+
+st.download_button(
+    "⬇️ Descargar base de datos actualizada (.xlsx)",
+    data=buffer,
+    file_name="base_datos_actualizada.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+)
+st.markdown('</div>', unsafe_allow_html=True)
